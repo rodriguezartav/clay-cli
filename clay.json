@@ -1,0 +1,15 @@
+{ 
+	"app":{
+		"name":"APP_NAME",
+		"version":"1"
+	},
+	"build":{
+		"src": "./test/fixtures",
+		"folder": "./test/results",
+		"pathsToExclude": []
+	},
+	"dist":{
+		"folder":"./test/dist"
+	}
+
+}
