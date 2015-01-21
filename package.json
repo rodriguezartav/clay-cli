@@ -1,7 +1,7 @@
 {
   "name": "clay-cli",
-  "version": "0.0.0",
-  "description": "Builds Web Pages and Components",
+  "version": "1.0.0",
+  "description": "Publish Web Pages and Components",
   "main": "index.js",
   "bin": {
     "r2": "bin/r2.js"
@@ -49,6 +49,11 @@
     "gulp-rimraf": "~0.1.1",
     "rimraf": "~2.2.8",
     "gulp": "~3.8.10",
-    "jszip": "~2.4.0"
+    "jszip": "~2.4.0",
+    "r2-config": "0.0.0",
+    "gulp-cached": "~1.0.1",
+    "gulp-minify-css": "~0.3.11",
+    "gulp-concat": "~2.4.2",
+    "open": "0.0.5"
   }
 }

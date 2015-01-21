@@ -6,7 +6,6 @@ var PluginError = gutil.PluginError;
 
 var cheerio = require("cheerio");
 
-
 function gulpVisualforceHtml(opts){
 
   return through.obj(function(file, enc, callback){
@@ -59,14 +58,14 @@ function gulpVisualforceHtml(opts){
         if(opts.r2 != false && !opts.sf) $("head").append(clay);
         else if(opts.r2 != false && opts.sf) $("head").append(claysf);
 
-        if( opts.sf ){
+        
 
           $("link").each(function(i, elem) {
             var el = $(this)
             var url = el.attr("href");
             url = url.replace("{3vot}/", "");
 
-            if(url && url.indexOf("http") !=0 ){
+            if(url && url.indexOf("http") !=0 && opts.sf ){
               var transformed = "{!URLFOR($Resource." + opts.name + ", '" +url +"')}"
               el.attr("href", transformed);
             }   
@@ -77,17 +76,15 @@ function gulpVisualforceHtml(opts){
             var url = el.attr("src");
             if(url){
               url = url.replace("{3vot}/", "");
-              if(url && url.indexOf("http") !=0  ){
+              if(url && url.indexOf("http") !=0  && opts.sf ){
                 var transformed = "{!URLFOR($Resource." + opts.name + ", '" +url +"')}"
                 el.attr("src", transformed);
-                el.html(";");
               }
+              el.html(";");
             }
           });
-        }
-
         this.push(file);
-        file.contents = new Buffer( $.xml() );
+        file.contents = new Buffer( $.html() );
       }catch(e){ 
         throw new PluginError({
           plugin: 'R2-VFTRANSFORM',

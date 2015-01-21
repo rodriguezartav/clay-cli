@@ -1,21 +1,46 @@
+var Path    = require("path")
+var fs      = require("fs");
+var Q       = require("q");
+var crypto  = require('crypto');
+var request = require("superagent");
 
-var Path     =  require("path")
-var fs       =  require("fs");
-var Q        =  require("q");
-var crypto   =  require('crypto');
-var request  =  require("superagent");
-var replace  =  require('gulp-replace');
-var revall   =  require('gulp-rev-all');
-var gulp     =  require("gulp");
-var jsforce  =  require("jsforce");
-var config   =  require("r2-config");
-var es       =  require("event-stream");
+var replace = require('gulp-replace');
+var revall  = require('gulp-rev-all');
+
+var gulp    = require("gulp");
+var jsforce = require("jsforce");
+var config  = require("r2-config");
+var es      = require("event-stream");
+
+gulp.task( 'CLAY_STATIC_RESOURCE_HTML', function() { 
+  return gulp.src([ config.get("build.src") + '/*.html'], { cwd: process.cwd() })      
+  .pipe( visualforceHTML({ name: config.get("ZIP_NAME") }) )
+  .pipe( gulp.dest( config.get("build.folder") ))
+});
+
+
+gulp.task('CLAY_LOCAL_HTML', function() {
+  gulp.src([ config.get("build.src") + '/*.html'], { cwd: process.cwd() })      
+  .pipe(replace( /{3vot}\//g, config.get("PREFIX")))
+  .pipe(replace( /{ROOT}/g, config.get("PREFIX")))
+  .pipe(replace( /<\/head>/g, '<script>window.clay = { path: "https://localhost:3000" }</script></head>' ))
+  .pipe(revall({
+    ignore: [ /^\/favicon.ico$/g ],
+    transformFilename: function (file, hash) {
+      var ext = Path.extname(file.path);
+      return Path.basename(file.path, ext) + ext;
+    },
+    prefix: config.get("PREFIX"),
+    quiet: true
+    }))
+  .pipe( gulp.dest( config.get("build.folder") ));
+});
 
 
 gulp.task( "CLAY_VISUALFORCE", [ "CLAY_LOGIN" ], function( cb ){
-  var name = config.get( "name" ) + "_dev";
+  var name = config.get( "app.name" ) + "_dev";
   var url  = config.get( "SF_SESSION" ).instance_url + "/services/data/v30.0/sobjects/ApexPage/Name/" + name; 
-  var page = fs.readFileSync( Path.join( config.get( "DIST_FOLDER" ), "index.html" ), "utf-8" );
+  var page = fs.readFileSync( Path.join( config.get( "build.folder" ), "index.html" ), "utf-8" );
 
   config.set( "VISUALFORCE_URL", config.get( "SF_SESSION" ).instance_url + "/apex/" + name);
 
@@ -39,7 +64,6 @@ gulp.task( "CLAY_VISUALFORCE", [ "CLAY_LOGIN" ], function( cb ){
   })
 })
 
-
 gulp.task( "CLAY_STATIC_RESOURCE", [ "CLAY_LOGIN","3VOT_ZIP" ], function( cb ){
   var zip   = fs.readFileSync( config.get("ZIP_PATH") );
   var zip64 = new Buffer(zip).toString('base64');
@@ -52,7 +76,7 @@ gulp.task( "CLAY_STATIC_RESOURCE", [ "CLAY_LOGIN","3VOT_ZIP" ], function( cb ){
   });
 
   var namespace = ""
-  if( config.get("namespace", false) ) namespace = "build.namespace__"
+  if( config.get("build.namespace") ) namespace = "build.namespace__"
 
   var fullNames = [{
     fullName:     namespace + name,
@@ -66,4 +90,3 @@ gulp.task( "CLAY_STATIC_RESOURCE", [ "CLAY_LOGIN","3VOT_ZIP" ], function( cb ){
     if( err ) cb( err );
   });
 })
-

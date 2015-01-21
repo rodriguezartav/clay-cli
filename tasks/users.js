@@ -1,87 +1,107 @@
-var gulp = require('gulp');
-var path = require("path");
-var chalk = require('chalk');
+var gulp   = require('gulp');
+var path   = require("path");
+var chalk  = require('chalk');
+var gutil  = require('gulp-util');
+var Q      = require("q");
+var fs     = require("fs");
+var extend = require('util')._extend;
+var prompt = require("prompt");
+var chalk  = require('chalk');
 
-var gutil = require('gulp-util');
+var Request    =   require("superagent");
 
+function get( namespace ){
+  if(!namespace) namespace= "3votbuilder";
 
-var users = require("../users");
-var config = require("../config");
+  var deferred = Q.defer();
 
-
-gulp.task("3VOT_PROMPTUSER", function(cb){
-  users.get()
-  .then( function(result){
-    config.set("USER", result.user);
-    return cb()
+  spawn( [ "get", namespace ] )
+  .then( function(result){ 
+    if( !result ) return deferred.reject("User not found - visit register.3vot.com and add add an user with users --add ");
+    deferred.resolve( result )
   })
-  .fail( function(err){  console.dir(err); } )
-  .catch( function(err){ console.dir(err); } )
-  .done();
-})
+  .fail( deferred.reject ).done();
+
+  return deferred.promise;
+}
 
 
-gulp.task("3VOT_ADD_USER", function(cb){
-  users.get()
-  .then( function(result){
-    config.set("USER", result.user);
-    return cb()
-  })
-  .fail( function(err){ console.error(err) } )
+function reset(namespace){
+  if(!namespace) namespace = "3votbuilder"
 
-})
+  var deferred = Q.defer();
+    spawn(["set", namespace, null ] )
+    .then( deferred.resolve )
+    .fail( deferred.reject ).done();
+ return deferred.promise; 
+}
 
+function set(contents, namespace){
+  if(!namespace) namespace = "3votbuilder"
 
-gulp.task("3VOT_REMOVE_USER", function(cb){
-  users.get()
-  .then( function(result){
-    config.set("USER", result.user);
-    return cb()
-  })
-  .fail( function(err){ console.error(err) } )
+  var deferred = Q.defer();
 
-})
+  function onResponse(res){
+    if (res.ok && responseOk(res.body) ) {
+      res.body = JSON.parse(res.body)  
+      spawn(["set", namespace, contents ] )
+      .then( deferred.resolve )
+      .fail( deferred.reject ).done();
+    } 
+    else return deferred.reject( res.error || res.body )
 
+  }
 
-gulp.task("CLAY_PROMPTUSER", function(cb){
-  users.get({namespace: "clay"})
-  .then( function(result){
-    config.set("USER", result.user);
-    return cb()
-  })
-  .fail( function(err){  console.dir(err); } )
-  .catch( function(err){ console.dir(err); } )
-  .done();
-})
+  Request.get( "https://clay.secure.force.com/api/services/apexrest/clay-api" )
+  .set('Accept', 'application/json')
+  .type("application/json")
+  .query("dev_code=" + contents)
+  .end( onResponse );
 
+   return deferred.promise;  
+}
 
-/*
+function spawn(commands){
+  var deferred = Q.defer();
 
-function clay_removeuser(object){
-  delete oldUser.users[ promptOptions.user.user_name + " : " + object.user.salesforce_user_name + " : " + object.user.salesforce_host ];
+  var exec = require('child_process').exec;
+
+  var npmcommand = (process.platform === "win32" ? "npm.cmd" : "npm")
   
-  return Packs.set(oldUser, "clay");
+  var spawn = require('child_process').spawn
+  var npm    = spawn(npmcommand, commands);
+  var npmResponse = "";
+
+  npm.stderr.setEncoding('utf8');
+  npm.stderr.on('data', function (data) {
+    deferred.reject(data)
+  });
+
+  npm.on('error', function (err) {
+    return deferred.reject(err);
+  });
+  
+  npm.stdout.on('data', function (data) {
+    if( data.toString().indexOf("undefined") == -1 ) npmResponse += data.toString();
+    else npmResponse = null
+  });
+
+  npm.on('close', function (code) {
+    if(npmResponse) npmResponse = npmResponse.replace(/(\r\n|\n|\r)/gm,"");
+    
+    return deferred.resolve(npmResponse)
+  });
+
+  return deferred.promise;  
 }
 
-
-function clay_saveuser(){
-  if( !promptOptions.user ) promptOptions.user = { users: {} }
-  else if( !promptOptions.user.users || promptOptions.user.users === undefined || promptOptions.user.users ===   "undefined") promptOptions.user.users = {};
-  promptOptions.user.users[ promptOptions.promptValues.user_name + " : " + promptOptions.promptValues.salesforce_user_name + " : " + promptOptions.promptValues.salesforce_host ] = promptOptions.promptValues;
-  return Packs.set(promptOptions.user, "clay");
+function responseOk(responseBody){
+  if(responseBody.indexOf("ERROR_CODE") > -1) return false
+  return true;
 }
 
-function removeuser(object){
-  delete oldUser.users[object.user.user_name];
-  return Packs.set(oldUser);
-
+module.exports = {
+  get: get,
+  set: set,
+  reset: reset
 }
-
-function saveuser(){
-  if( !promptOptions.user.users || promptOptions.user.users === undefined || promptOptions.user.users == "undefined") promptOptions.user.users = {};
-  promptOptions.user.users[promptOptions.promptValues.user_name] = promptOptions.promptValues;
-  return Packs.set(promptOptions.user);
-
-}
-
-*/

@@ -6,7 +6,7 @@ var gulp = require('gulp');
 var gutil = require('gulp-util');
 var chalk = require('chalk');
 var requireDir = require('require-dir');
-var users = require("./users")
+
 
 var localPath = Path.join( process.cwd(), "gulpfile.js" )
 

@@ -1,16 +1,17 @@
 
-var Path     =  require("path")
-var fs       =  require("fs");
-var Q        =  require("q");
-var crypto   =  require('crypto');
-var request  =  require("superagent");
-var replace  =  require('gulp-replace');
-var revall   =  require('gulp-rev-all');
-var gulp     =  require("gulp");
-var jsforce  =  require("jsforce");
-var config   =  require("r2-config");
-var es       =  require("event-stream");
+var Path    = require("path")
+var fs      = require("fs");
+var Q       = require("q");
+var crypto  = require('crypto');
+var request = require("superagent");
 
+var replace = require('gulp-replace');
+var revall  = require('gulp-rev-all');
+
+var gulp    = require("gulp");
+var jsforce = require("jsforce");
+var config  = require("r2-config");
+var es      = require("event-stream");
 
 gulp.task( "CLAY_VISUALFORCE", [ "CLAY_LOGIN" ], function( cb ){
   var name = config.get( "name" ) + "_dev";
@@ -39,7 +40,6 @@ gulp.task( "CLAY_VISUALFORCE", [ "CLAY_LOGIN" ], function( cb ){
   })
 })
 
-
 gulp.task( "CLAY_STATIC_RESOURCE", [ "CLAY_LOGIN","3VOT_ZIP" ], function( cb ){
   var zip   = fs.readFileSync( config.get("ZIP_PATH") );
   var zip64 = new Buffer(zip).toString('base64');
@@ -66,4 +66,3 @@ gulp.task( "CLAY_STATIC_RESOURCE", [ "CLAY_LOGIN","3VOT_ZIP" ], function( cb ){
     if( err ) cb( err );
   });
 })
-
